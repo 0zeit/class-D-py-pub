@@ -1,0 +1,95 @@
+import sys
+
+from PyQt6.QtCore import Qt, QPointF
+from PyQt6.QtGui import QPainter, QBrush, QColor, QMouseEvent
+from PyQt6.QtWidgets import QApplication, QWidget
+
+
+class Ball:
+    def __init__(self, _r, _pos):
+        self.r = _r
+        self.pos = QPointF(float(_pos[0]), float(_pos[1]))
+
+    def contains(self, _c_pos: QPointF) -> bool:
+        dx = _c_pos.x() - self.pos.x()
+        dy = _c_pos.y() - self.pos.y()
+        
+        return ((dx*dx + dy*dy) <= (self.r*self.r))
+
+
+# QWidget을 상속받아 QWidget내에 들어있는 것들도 사용가능.
+class MyWidget(QWidget):
+    # __init__: 클래스의 생성자. 이 경우에는 MyWidget의 초기화를 담당.
+    def __init__(self):
+        # QWidget 클래스를 초기화함
+        super().__init__()
+        self.setWindowTitle("PyQT 프로젝트")
+        self.setAutoFillBackground(True)
+        self.resize(600, 600)
+
+        p = self.palette()
+        p.setColor(self.backgroundRole(), Qt.GlobalColor.white)
+        self.setPalette(p)
+
+        self.balls = [ # 배열 안에 여러개의 공을 담아두자.
+            Ball(20, (150, 150)),
+            Ball(20, (200, 200)),
+        ]
+        self.drag_idx = None # 드래그 하는 공의 인덱스.
+        self.drag_offset = QPointF()
+
+    # paintEvent: PyQT가 무언가를 그릴 때 필요로 하는 진입점.
+    def paintEvent(self, event):
+        ball_color = QColor(160, 160, 160)
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QBrush(ball_color))
+
+        for ball in self.balls:
+            painter.drawEllipse(ball.pos, ball.r, ball.r)
+
+    # mouseMoveEvent: PyQT에서 마우스가 움직였을때 사용되는 진입점.
+    def mouseMoveEvent(self, _e: QMouseEvent):
+        if self.drag_idx is None:
+            return # 아무것도 선택되있지 않으면 아무것도 하지않는다.
+        
+        cursor = _e.position() # 마우스 커서의 위치.
+        ball = self.balls[self.drag_idx]
+
+        ball.pos = cursor - self.drag_offset
+
+        self.update()
+
+    # mousePressEvent: PyQT에서 마우스를 클릭했을때 사용되는 진입점.
+    def mousePressEvent(self, _e: QMouseEvent):
+        if _e.button() != Qt.MouseButton.LeftButton:
+            return # 왼쪽 마우스 클릭이 아니면 아무것도 하지않는다.
+        
+        cursor = _e.position() # 마우스 커서의 위치.
+
+        for idx, ball in enumerate(self.balls):
+            if ball.contains(cursor):
+                self.drag_idx = idx
+                self.drag_offset = cursor - ball.pos
+                
+                break;
+
+    # mouseReleaseEvent: PyQT에서 마우스 클릭을 땠을때 사용되는 진입점.
+    def mouseReleaseEvent(self, _e: QMouseEvent):
+        if _e.button() == Qt.MouseButton.LeftButton:
+            self.drag_idx = None # 다시 아무것도 선택되지 않은것으로 한다.
+
+
+def main():
+    app = QApplication(sys.argv)
+    window = MyWidget() # 여기서 MyWidget의 __init__이 호출된다.
+    window.show()
+
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__": # 프로그램 진입점
+    main()
+
