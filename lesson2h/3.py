@@ -47,12 +47,9 @@ class MyWidget(QWidget):
         self.drag_idx = None
         self.drag_offset = QPointF()
         self.last_mouse_pos = QPointF()      # 마지막 마우스 위치 저장
-        self.drag_velocity = QPointF(0, 0)   # 드래그 속도 저장
-
-        
+        self.drag_velocity = QPointF(0, 0)   # 드래그 속도 저장        
         self.elasticity = 0.95  # 탄성 계수 e, 0.95의 경우 조금씩 에너지를 손실.
 
-        
         self.timer = QTimer()
         self.timer.timeout.connect(self.physics_update)
         self.timer.start(16) # 타이머 설정: 16ms마다 업데이트 (약 60 FPS)
