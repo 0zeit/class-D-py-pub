@@ -1,4 +1,6 @@
+PyQt6
 numpy
 matplotlib
+
+# FFmpeg 필요!
 manim
-PyQt6
