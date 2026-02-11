@@ -1,18 +1,6 @@
-import sys
+import tkinter as tk
+from tkinter import messagebox, scrolledtext
 from typing import Dict, Tuple, Optional
-
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QLabel,
-    QLineEdit,
-    QTextEdit,
-    QMessageBox,
-)
 
 
 class Customer:
@@ -54,9 +42,9 @@ class Bank:
 
     def __init__(self, _name: str) -> None:
         self.name: str = _name  # 은행 이름
-        self.customers: Dict[str, Customer] = ( # 고객들을 저장하는 딕셔너리 {계좌번호: Customer}
+        self.customers: Dict[str, Customer] = (
             {}
-        )
+        )  # 고객들을 저장하는 딕셔너리 {계좌번호: Customer}
         self.next_account_number: int = 1000  # 다음에 발급할 계좌번호
 
     def create_account(self, _name: str, _initial_deposit: int = 0) -> Tuple[bool, str]:
@@ -118,253 +106,345 @@ class Bank:
         return result
 
 
-if __name__ == "__main__":  # 이 파일 내에서만 실행됨!
-    bank = Bank("으악")
-    
-    new_customer = bank.create_account("홍길동")
-    # 이것저것 해보기!
-
-
-class BankSystemUI(QWidget):
+class BankSystemUI:
     """은행 시스템 - 은행원이 쓰는 유저 인터페이스(UI)"""
+    
+    FONT_TITLE = ("Arial", 20, "bold")
+    FONT_LABEL = ("Arial", 12)
+    FONT_ENTRY = ("Arial", 11)
+    FONT_BUTTON = ("Arial", 11, "bold")
+    FONT_RESULT = ("Arial", 10)
 
-    def __init__(self, _bank):
-        super().__init__()
-        self.bank = _bank
+    def __init__(self, _bank: Bank) -> None:
+        self.bank: Bank = _bank
+
+        # tkinter 메인 윈도우 생성
+        self.root = tk.Tk()
+        self.root.title("뮤타블 은행 시스템")
+        self.root.geometry("700x600")
+
         self._init_ui()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         """UI 초기화 - 버튼과 입력창 배치"""
-        self.setWindowTitle("뮤타블 은행 시스템")
-        self.setGeometry(100, 100, 600, 500)
 
-        # 메인 레이아웃
-        main_layout = QVBoxLayout()
-
-        # 제목
-        title = QLabel("🏦 뮤타블 은행 시스템")
-        title.setStyleSheet("font-size: 20px; font-weight: bold; padding: 10px;")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(title)
+        # === 제목 ===
+        title_label = tk.Label(
+            self.root,
+            text="은행 시스템",
+            font=self.FONT_TITLE,
+            pady=10
+        )
+        title_label.pack()
 
         # === 계좌 개설 섹션 ===
-        create_layout = QHBoxLayout()
-        create_layout.addWidget(QLabel("고객 이름:"))
-        self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("홍길동")
-        create_layout.addWidget(self.name_input)
+        create_frame = tk.Frame(self.root, pady=5)
+        create_frame.pack(fill=tk.X, padx=10)
 
-        create_layout.addWidget(QLabel("초기 입금액:"))
-        self.initial_deposit_input = QLineEdit()
-        self.initial_deposit_input.setPlaceholderText("10000")
-        create_layout.addWidget(self.initial_deposit_input)
+        tk.Label(
+            create_frame,
+            text="고객 이름:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.name_input = tk.Entry(create_frame, width=15, font=self.FONT_ENTRY)
+        self.name_input.pack(side=tk.LEFT, padx=5)
 
-        create_btn = QPushButton("계좌 개설")
-        create_btn.clicked.connect(self._create_account)
-        create_layout.addWidget(create_btn)
+        tk.Label(
+            create_frame,
+            text="초기 입금액:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.initial_deposit_input = tk.Entry(create_frame, width=15, font=self.FONT_ENTRY)
+        self.initial_deposit_input.pack(side=tk.LEFT, padx=5)
 
-        main_layout.addLayout(create_layout)
+        create_btn = tk.Button(
+            create_frame,
+            text="계좌 개설",
+            command=self._create_account,
+            bg="#4CAF50",
+            fg="white",
+            width=10,
+            font=self.FONT_BUTTON
+        )
+        create_btn.pack(side=tk.LEFT, padx=5)
 
         # === 입금/출금 섹션 ===
-        transaction_layout = QHBoxLayout()
-        transaction_layout.addWidget(QLabel("계좌번호:"))
-        self.account_input = QLineEdit()
-        self.account_input.setPlaceholderText("1001")
-        transaction_layout.addWidget(self.account_input)
+        transaction_frame = tk.Frame(self.root, pady=5)
+        transaction_frame.pack(fill=tk.X, padx=10)
 
-        transaction_layout.addWidget(QLabel("금액:"))
-        self.amount_input = QLineEdit()
-        self.amount_input.setPlaceholderText("5000")
-        transaction_layout.addWidget(self.amount_input)
+        tk.Label(
+            transaction_frame,
+            text="계좌번호:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.account_input = tk.Entry(transaction_frame, width=15, font=self.FONT_ENTRY)
+        self.account_input.pack(side=tk.LEFT, padx=5)
 
-        deposit_btn = QPushButton("입금")
-        deposit_btn.clicked.connect(self._deposit)
-        transaction_layout.addWidget(deposit_btn)
+        tk.Label(
+            transaction_frame,
+            text="금액:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.amount_input = tk.Entry(transaction_frame, width=15, font=self.FONT_ENTRY)
+        self.amount_input.pack(side=tk.LEFT, padx=5)
 
-        withdraw_btn = QPushButton("출금")
-        withdraw_btn.clicked.connect(self._withdraw)
-        transaction_layout.addWidget(withdraw_btn)
+        deposit_btn = tk.Button(
+            transaction_frame,
+            text="입금",
+            command=self._deposit,
+            bg="#2196F3",
+            fg="white",
+            width=8,
+            font=self.FONT_BUTTON
+        )
+        deposit_btn.pack(side=tk.LEFT, padx=5)
 
-        main_layout.addLayout(transaction_layout)
+        withdraw_btn = tk.Button(
+            transaction_frame,
+            text="출금",
+            command=self._withdraw,
+            bg="#FF9800",
+            fg="white",
+            width=8,
+            font=self.FONT_BUTTON
+        )
+        withdraw_btn.pack(side=tk.LEFT, padx=5)
 
         # === 송금 섹션 ===
-        transfer_layout = QHBoxLayout()
-        transfer_layout.addWidget(QLabel("보내는 계좌:"))
-        self.from_account_input = QLineEdit()
-        self.from_account_input.setPlaceholderText("1001")
-        transfer_layout.addWidget(self.from_account_input)
+        transfer_frame = tk.Frame(self.root, pady=5)
+        transfer_frame.pack(fill=tk.X, padx=10)
 
-        transfer_layout.addWidget(QLabel("받는 계좌:"))
-        self.to_account_input = QLineEdit()
-        self.to_account_input.setPlaceholderText("1002")
-        transfer_layout.addWidget(self.to_account_input)
+        tk.Label(
+            transfer_frame,
+            text="보내는 계좌:",
+            width=12,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.from_account_input = tk.Entry(transfer_frame, width=10, font=self.FONT_ENTRY)
+        self.from_account_input.pack(side=tk.LEFT, padx=5)
 
-        transfer_layout.addWidget(QLabel("금액:"))
-        self.transfer_amount_input = QLineEdit()
-        self.transfer_amount_input.setPlaceholderText("3000")
-        transfer_layout.addWidget(self.transfer_amount_input)
+        tk.Label(
+            transfer_frame,
+            text="받는 계좌:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.to_account_input = tk.Entry(transfer_frame, width=10, font=self.FONT_ENTRY)
+        self.to_account_input.pack(side=tk.LEFT, padx=5)
 
-        transfer_btn = QPushButton("송금")
-        transfer_btn.clicked.connect(self._transfer)
-        transfer_layout.addWidget(transfer_btn)
+        tk.Label(
+            transfer_frame,
+            text="금액:",
+            width=6,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.transfer_amount_input = tk.Entry(transfer_frame, width=10, font=self.FONT_ENTRY)
+        self.transfer_amount_input.pack(side=tk.LEFT, padx=5)
 
-        main_layout.addLayout(transfer_layout)
+        transfer_btn = tk.Button(
+            transfer_frame,
+            text="송금",
+            command=self._transfer,
+            bg="#9C27B0",
+            fg="white",
+            width=8,
+            font=self.FONT_BUTTON
+        )
+        transfer_btn.pack(side=tk.LEFT, padx=5)
 
         # === 조회 버튼 ===
-        query_layout = QHBoxLayout()
+        query_frame = tk.Frame(self.root, pady=5)
+        query_frame.pack(fill=tk.X, padx=10)
 
-        check_balance_btn = QPushButton("잔액 조회")
-        check_balance_btn.clicked.connect(self._check_balance)
-        query_layout.addWidget(check_balance_btn)
+        check_balance_btn = tk.Button(
+            query_frame,
+            text="잔액 조회",
+            command=self._check_balance,
+            bg="#607D8B",
+            fg="white",
+            width=15,
+            font=self.FONT_BUTTON
+        )
+        check_balance_btn.pack(side=tk.LEFT, padx=5)
 
-        show_all_btn = QPushButton("전체 고객 조회")
-        show_all_btn.clicked.connect(self._show_all_customers)
-        query_layout.addWidget(show_all_btn)
-
-        main_layout.addLayout(query_layout)
+        show_all_btn = tk.Button(
+            query_frame,
+            text="전체 고객 조회",
+            command=self._show_all_customers,
+            bg="#607D8B",
+            fg="white",
+            width=15,
+            font=self.FONT_BUTTON
+        )
+        show_all_btn.pack(side=tk.LEFT, padx=5)
 
         # === 결과 출력 영역 ===
-        self.result_display = QTextEdit()
-        self.result_display.setReadOnly(True)
-        self.result_display.setStyleSheet("background-color: #686868; padding: 10px;")
-        main_layout.addWidget(self.result_display)
+        result_frame = tk.Frame(self.root, pady=5)
+        result_frame.pack(fill=tk.BOTH, expand=True, padx=10)
 
-        self.setLayout(main_layout)
+        tk.Label(
+            result_frame,
+            text="결과:",
+            font=self.FONT_LABEL
+        ).pack(anchor=tk.W)
+        
+        self.result_display = scrolledtext.ScrolledText(
+            result_frame,
+            width=80,
+            height=15,
+            bg="#2b2b2b",
+            fg="white",
+            font=self.FONT_RESULT,
+        )
+        self.result_display.pack(fill=tk.BOTH, expand=True)
 
-    def _show_message(self, _message):
+    def _show_message(self, _message: str) -> None:
         """결과 출력 영역에 메시지 표시"""
-        current_text = self.result_display.toPlainText()
-        self.result_display.setText(f"{_message}\n{'='*50}\n{current_text}")
+        current_text = self.result_display.get("1.0", tk.END)
+        self.result_display.delete("1.0", tk.END)
+        self.result_display.insert("1.0", f"{_message}\n{'='*50}\n{current_text}")
 
-    def _create_account(self):
+    def _create_account(self) -> None:
         """계좌 개설 버튼 클릭 시"""
-        name = self.name_input.text().strip()
-        initial_deposit_text = self.initial_deposit_input.text().strip()
+        name = self.name_input.get().strip()
+        initial_deposit_text = self.initial_deposit_input.get().strip()
 
         if not name:
-            QMessageBox.warning(self, "오류", "고객 이름을 입력하세요.")
+            messagebox.showwarning("오류", "고객 이름을 입력하세요.")
             return
 
         try:
             initial_deposit = int(initial_deposit_text) if initial_deposit_text else 0
         except ValueError:
-            QMessageBox.warning(self, "오류", "초기 입금액은 숫자여야 합니다.")
+            messagebox.showwarning("오류", "초기 입금액은 숫자여야 합니다.")
             return
 
         success, message = self.bank.create_account(name, initial_deposit)
 
         if success:
-            self._show_message(f"✅ {message}")
-            self.name_input.clear()
-            self.initial_deposit_input.clear()
+            self._show_message(f"[OK] {message}")
+            self.name_input.delete(0, tk.END)
+            self.initial_deposit_input.delete(0, tk.END)
         else:
-            QMessageBox.warning(self, "오류", message)
+            messagebox.showwarning("오류", message)
 
-    def _deposit(self):
+    def _deposit(self) -> None:
         """입금 버튼 클릭 시"""
-        account_number = self.account_input.text().strip()
-        amount_text = self.amount_input.text().strip()
+        account_number = self.account_input.get().strip()
+        amount_text = self.amount_input.get().strip()
 
         if not account_number or not amount_text:
-            QMessageBox.warning(self, "오류", "계좌번호와 금액을 입력하세요.")
+            messagebox.showwarning("오류", "계좌번호와 금액을 입력하세요.")
             return
 
         try:
             amount = int(amount_text)
         except ValueError:
-            QMessageBox.warning(self, "오류", "금액은 숫자여야 합니다.")
+            messagebox.showwarning("오류", "금액은 숫자여야 합니다.")
             return
 
         customer = self.bank.find_customer(account_number)
         if customer is None:
-            QMessageBox.warning(self, "오류", "계좌를 찾을 수 없습니다.")
+            messagebox.showwarning("오류", "계좌를 찾을 수 없습니다.")
             return
 
         success, message = customer.deposit(amount)
 
         if success:
-            self._show_message(f"✅ {message}")
-            self.amount_input.clear()
+            self._show_message(f"[OK] {message}")
+            self.amount_input.delete(0, tk.END)
         else:
-            QMessageBox.warning(self, "오류", message)
+            messagebox.showwarning("오류", message)
 
-    def _withdraw(self):
+    def _withdraw(self) -> None:
         """출금 버튼 클릭 시"""
-        account_number = self.account_input.text().strip()
-        amount_text = self.amount_input.text().strip()
+        account_number = self.account_input.get().strip()
+        amount_text = self.amount_input.get().strip()
 
         if not account_number or not amount_text:
-            QMessageBox.warning(self, "오류", "계좌번호와 금액을 입력하세요.")
+            messagebox.showwarning("오류", "계좌번호와 금액을 입력하세요.")
             return
 
         try:
             amount = int(amount_text)
         except ValueError:
-            QMessageBox.warning(self, "오류", "금액은 숫자여야 합니다.")
+            messagebox.showwarning("오류", "금액은 숫자여야 합니다.")
             return
 
         customer = self.bank.find_customer(account_number)
         if customer is None:
-            QMessageBox.warning(self, "오류", "계좌를 찾을 수 없습니다.")
+            messagebox.showwarning("오류", "계좌를 찾을 수 없습니다.")
             return
 
         success, message = customer.withdraw(amount)
 
         if success:
-            self._show_message(f"✅ {message}")
-            self.amount_input.clear()
+            self._show_message(f"[OK] {message}")
+            self.amount_input.delete(0, tk.END)
         else:
-            QMessageBox.warning(self, "오류", message)
+            messagebox.showwarning("오류", message)
 
-    def _transfer(self):
+    def _transfer(self) -> None:
         """송금 버튼 클릭 시"""
-        from_account = self.from_account_input.text().strip()
-        to_account = self.to_account_input.text().strip()
-        amount_text = self.transfer_amount_input.text().strip()
+        from_account = self.from_account_input.get().strip()
+        to_account = self.to_account_input.get().strip()
+        amount_text = self.transfer_amount_input.get().strip()
 
         if not from_account or not to_account or not amount_text:
-            QMessageBox.warning(self, "오류", "모든 필드를 입력하세요.")
+            messagebox.showwarning("오류", "모든 필드를 입력하세요.")
             return
 
         try:
             amount = int(amount_text)
         except ValueError:
-            QMessageBox.warning(self, "오류", "금액은 숫자여야 합니다.")
+            messagebox.showwarning("오류", "금액은 숫자여야 합니다.")
             return
 
         success, message = self.bank.transfer(from_account, to_account, amount)
 
         if success:
-            self._show_message(f"✅ {message}")
-            self.transfer_amount_input.clear()
+            self._show_message(f"[OK] {message}")
+            self.transfer_amount_input.delete(0, tk.END)
         else:
-            QMessageBox.warning(self, "오류", message)
+            messagebox.showwarning("오류", message)
 
-    def _check_balance(self):
+    def _check_balance(self) -> None:
         """잔액 조회 버튼 클릭 시"""
-        account_number = self.account_input.text().strip()
+        account_number = self.account_input.get().strip()
 
         if not account_number:
-            QMessageBox.warning(self, "오류", "계좌번호를 입력하세요.")
+            messagebox.showwarning("오류", "계좌번호를 입력하세요.")
             return
 
         customer = self.bank.find_customer(account_number)
         if customer is None:
-            QMessageBox.warning(self, "오류", "계좌를 찾을 수 없습니다.")
+            messagebox.showwarning("오류", "계좌를 찾을 수 없습니다.")
             return
 
-        self._show_message(f"💰 {customer.get_info()}")
+        self._show_message(f"[잔액] {customer.get_info()}")
 
-    def _show_all_customers(self):
+    def _show_all_customers(self) -> None:
         """전체 고객 조회 버튼 클릭 시"""
         all_customers = self.bank.get_all_customers()
         self._show_message(all_customers)
 
+    def run(self) -> None:
+        """프로그램 실행"""
+        self.root.mainloop()
+
 
 if __name__ == "__main__":  # 이 파일 내에서만 실행됨!
-    app = QApplication(sys.argv)
     bank = Bank("뮤타블 은행")  # Bank 객체 생성
-    window = BankSystemUI(bank) # 만들어진 은행 객체 넘겨주기
-    window.show()
-
-    sys.exit(app.exec())
+    ui = BankSystemUI(bank)  # UI 객체 생성
+    ui.run()  # 프로그램 실행
