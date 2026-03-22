@@ -1,5 +1,4 @@
 numpy
 matplotlib
-
-# FFmpeg 필요!
-manim
+fastapi
+uvicorn
