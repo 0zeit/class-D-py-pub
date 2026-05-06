@@ -80,10 +80,33 @@ if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
 
 
-# http://localhost:8000/docs
-# curl http://localhost:8000/items
-# curl http://localhost:8000/items/1
-# curl http://localhost:8000/items/999
-# curl -X POST http://localhost:8000/items -H "Content-Type: application/json" -d '{"name": "딸기", "price": 6000, "in_stock": true, "description": "엄청난 딸기"}'
-# curl -X PUT http://localhost:8000/items/1 -H "Content-Type: application/json" -d '{"name": "수정된 사과", "price": 2000, "in_stock": false}'
-# curl -X DELETE http://localhost:8000/items/2
+"""
+http://localhost:8000/docs
+curl http://localhost:8000/items
+curl http://localhost:8000/items/1
+curl http://localhost:8000/items/999
+curl -X POST http://localhost:8000/items -H "Content-Type: application/json" -d '{"name": "딸기", "price": 6000, "in_stock": true, "description": "엄청난 딸기"}'
+curl -X PUT http://localhost:8000/items/1 -H "Content-Type: application/json" -d '{"name": "수정된 사과", "price": 2000, "in_stock": false}'
+curl -X DELETE http://localhost:8000/items/2
+
+# 생각해보기
+
+# 나쁜 설계
+GET  /getItems          # GET 과 get? 왜 굳이?
+POST /createItem        # POST 자체가 추가 역할을 함. 왜 create가 따로?
+GET  /deleteItem?id=1   # delete* 는 주로 DELETE 사용함
+
+# 좋은 설계
+GET    /items
+POST   /items
+DELETE /items/1
+
+# 계층구조와 관계 표현
+GET /users/5/orders        # 5번 유저의 주문 목록
+GET /users/5/orders/12     # 5번 유저의 12번 주문
+
+# ? 를 이용한 쿼리(검색/필터링) 기능
+GET /items?in_stock=true          # 재고 있는 것만
+GET /items?sort=price&order=asc   # 가격 오름차순
+GET /items?page=2&limit=10        # 페이지네이션
+"""

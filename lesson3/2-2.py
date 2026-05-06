@@ -1,8 +1,12 @@
 import sys
 from typing import Dict, Tuple, Optional, List
 
-# 만들어보기!
 # 클래스(Class)
+#   고객(Customer)
+#       __init__()
+#       earn_points()
+#       use_points()
+#       get_info()
 #   카페(Cafe)
 #       __init__()
 #       register_customer()
@@ -10,16 +14,6 @@ from typing import Dict, Tuple, Optional, List
 #       order()
 #       show_menu()
 #       get_all_customers()
-#
-#   고객(Customer)
-#       __init__()
-#       earn_points()
-#       use_points()
-#       get_info()
-
-
-from typing import Dict, Tuple, Optional, List
-
 
 class Customer:
     """고객 클래스 - 카페의 고객 정보를 담는 클래스"""

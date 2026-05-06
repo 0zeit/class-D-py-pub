@@ -3,22 +3,17 @@ from typing import Dict, Tuple, Optional
 
 # 만들어보기!
 # 클래스(Class)
+#   고객(Customer)
+#       __init__()
+#       deposit()
+#       withdraw()
+#       get_info()
 #   은행(Bank)
 #       __init__()
 #       create_account()
 #       find_customer()
 #       transfer()
 #       get_all_customers()
-#
-#   고객(Customer)
-#       __init__()
-#       deposit()
-#       withdraw()
-#       get_info()
-
-
-from typing import Dict, Tuple, Optional
-
 
 class Customer:
     """고객 클래스 - 은행의 고객 정보를 담는 클래스"""

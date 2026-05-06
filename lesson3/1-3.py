@@ -1,265 +1,450 @@
-import sys
-from typing import Dict, Tuple, Optional, List
-from datetime import datetime, timedelta
-
-# 만들어보기!
-# 클래스(Class)
-#   도서관(Library)
-#       __init__()
-#       add_book()
-#       register_member()
-#       find_member()
-#       find_book()
-#       borrow_book()
-#       return_book()
-#       get_all_members()
-#       get_all_books()
-#
-#   회원(Member)
-#       __init__()
-#       can_borrow()
-#       borrow()
-#       return_book()
-#       calculate_late_fee()
-#       get_info()
-#
-#   책(Book)
-#       __init__()
-#       is_available()
-#       borrow()
-#       return_book()
-#       get_info()
+import tkinter as tk
+from tkinter import messagebox, scrolledtext
+from typing import Dict, Tuple, Optional
 
 
-from typing import Dict, Tuple, Optional, List
-from datetime import datetime, timedelta
+class Customer:
+    """고객 클래스 - 은행의 고객 정보를 담는 클래스"""
 
+    def __init__(self, _name: str, _account_number: str, _balance: int = 0) -> None:
+        self.name: str = _name  # 고객 이름
+        self.account_number: str = _account_number  # 계좌번호
+        self.balance: int = _balance  # 잔액
 
-class Book:
-    """책 클래스 - 도서관의 책 정보를 담는 클래스"""
+    def deposit(self, _amount: int) -> Tuple[bool, str]:
+        """입금 - 돈을 계좌에 넣기"""
+        if _amount <= 0:
+            return False, "입금액은 0보다 커야 합니다."
 
-    def __init__(self, _title: str, _book_id: str, _author: str) -> None:
-        self.title: str = _title  # 책 제목
-        self.book_id: str = _book_id  # 책 번호
-        self.author: str = _author  # 저자
-        self.is_borrowed: bool = False  # 대출 중인지 여부
-        self.borrower_id: Optional[str] = None  # 대출한 회원 ID
-        self.borrow_date: Optional[datetime] = None  # 대출 날짜
+        self.balance += _amount
 
-    def is_available(self) -> bool:
-        """대출 가능한지 확인"""
-        # === 내용 써보기! ===
-        # 1. self.is_borrowed가 False이면 True 반환, 아니면 False 반환
-        # (대출 중이 아니면 대출 가능)
-        
-        return not self.is_borrowed
+        return True, f"{_amount:,}원이 입금되었습니다. 현재 잔액: {self.balance:,}원"
 
-    def borrow(self, _member_id: str, _borrow_date: datetime) -> Tuple[bool, str]:
-        """책 대출하기"""
-        # === 내용 써보기! ===
-        # 1. self.is_available()이 False이면, (False, "이미 대출 중인 책입니다.") 반환
-        # 2. self.is_borrowed를 True로 설정
-        # 3. self.borrower_id를 _member_id로 설정
-        # 4. self.borrow_date를 _borrow_date로 설정
-        # 5. (True, "대출 완료 메시지") 반환 (아래 return 참고)
-        
-        return True, f"'{self.title}' 책이 대출되었습니다."
+    def withdraw(self, _amount: int) -> Tuple[bool, str]:
+        """출금 - 돈을 계좌에서 빼기"""
+        if _amount <= 0:
+            return False, "출금액은 0보다 커야 합니다."
 
-    def return_book(self) -> Tuple[bool, str]:
-        """책 반납하기"""
-        # === 내용 써보기! ===
-        # 1. self.is_borrowed가 False이면, (False, "대출 중이 아닌 책입니다.") 반환
-        # 2. self.is_borrowed를 False로 설정
-        # 3. self.borrower_id를 None으로 설정
-        # 4. self.borrow_date를 None으로 설정
-        # 5. (True, "반납 완료 메시지") 반환 (아래 return 참고)
-        
-        return True, f"'{self.title}' 책이 반납되었습니다."
+        if self.balance < _amount:
+            return False, f"잔액이 부족합니다. 현재 잔액: {self.balance:,}원"
+
+        self.balance -= _amount
+
+        return True, f"{_amount:,}원이 출금되었습니다. 현재 잔액: {self.balance:,}원"
 
     def get_info(self) -> str:
-        """책 정보를 문자열로 반환"""
-        status = "대출 중" if self.is_borrowed else "대출 가능"
-        return f"[{self.book_id}] {self.title} (저자: {self.author}) - {status}"
+        """고객 정보를 문자열로 반환"""
+        return f"[{self.account_number}] {self.name}님 - 잔액: {self.balance:,}원"
 
 
-class Member:
-    """회원 클래스 - 도서관 회원 정보를 담는 클래스"""
-
-    MAX_BORROW_LIMIT = 5  # 최대 대출 가능 권수
-    BORROW_PERIOD_DAYS = 14  # 대출 기간 (일)
-    LATE_FEE_PER_DAY = 100  # 하루당 연체료 (원)
-
-    def __init__(self, _name: str, _member_id: str) -> None:
-        self.name: str = _name  # 회원 이름
-        self.member_id: str = _member_id  # 회원 번호
-        self.borrowed_books: List[str] = []  # 대출한 책 ID 목록
-
-    def can_borrow(self) -> bool:
-        """대출 가능한지 확인 (최대 5권 제한)"""
-        # === 내용 써보기! ===
-        # 1. len(self.borrowed_books)가 MAX_BORROW_LIMIT보다 작으면 True, 아니면 False 반환
-        
-        return len(self.borrowed_books) < self.MAX_BORROW_LIMIT
-
-    def borrow(self, _book_id: str) -> Tuple[bool, str]:
-        """책 대출하기 (회원 측 처리)"""
-        # === 내용 써보기! ===
-        # 1. self.can_borrow()가 False이면, (False, f"대출 한도 초과! 최대 {MAX_BORROW_LIMIT}권까지...") 반환
-        # 2. self.borrowed_books에 _book_id를 추가 (self.borrowed_books.append(_book_id))
-        # 3. (True, "대출 성공 메시지") 반환 (아래 return 참고)
-        
-        return True, f"책 대출이 완료되었습니다. (현재 대출: {len(self.borrowed_books)}권)"
-
-    def return_book(self, _book_id: str) -> Tuple[bool, str]:
-        """책 반납하기 (회원 측 처리)"""
-        # === 내용 써보기! ===
-        # 1. _book_id가 self.borrowed_books에 없으면, (False, "대출하지 않은 책입니다.") 반환
-        # 2. self.borrowed_books에서 _book_id를 제거 (self.borrowed_books.remove(_book_id))
-        # 3. (True, "반납 성공 메시지") 반환 (아래 return 참고)
-        
-        return True, f"책 반납이 완료되었습니다. (현재 대출: {len(self.borrowed_books)}권)"
-
-    def calculate_late_fee(self, _borrow_date: datetime, _return_date: datetime) -> int:
-        """연체료 계산"""
-        # === 내용 써보기! ===
-        # 1. due_date 변수를 만들고, _borrow_date + timedelta(days=BORROW_PERIOD_DAYS)를 저장
-        # 2. _return_date가 due_date보다 작거나 같으면, 0을 반환 (연체 없음)
-        # 3. late_days 변수를 만들고, (_return_date - due_date).days를 저장
-        # 4. late_fee 변수를 만들고, late_days * LATE_FEE_PER_DAY를 저장
-        # 5. late_fee를 반환 (아래 return 참고)
-        
-        return 0
-
-    def get_info(self) -> str:
-        """회원 정보를 문자열로 반환"""
-        return f"[{self.member_id}] {self.name}님 - 대출 중: {len(self.borrowed_books)}권"
-
-
-class Library:
-    """도서관 클래스 - 책과 회원을 관리하는 클래스"""
+class Bank:
+    """은행 클래스 - 여러 고객을 관리하는 클래스"""
 
     def __init__(self, _name: str) -> None:
-        self.name: str = _name  # 도서관 이름
-        self.books: Dict[str, Book] = {}  # 책들을 저장하는 딕셔너리 {책ID: Book}
-        self.members: Dict[str, Member] = {}  # 회원들을 저장하는 딕셔너리 {회원ID: Member}
-        self.next_book_id: int = 1  # 다음에 발급할 책 번호
-        self.next_member_id: int = 1  # 다음에 발급할 회원 번호
+        self.name: str = _name  # 은행 이름
+        self.customers: Dict[str, Customer] = (
+            {}
+        )  # 고객들을 저장하는 딕셔너리 {계좌번호: Customer}
+        self.next_account_number: int = 1000  # 다음에 발급할 계좌번호
 
-    def add_book(self, _title: str, _author: str) -> Tuple[bool, str]:
-        """새 책 추가"""
-        # === 내용 써보기! ===
-        # 1. book_id 변수를 만들고, f"B{self.next_book_id:04d}"를 저장 (예: B0001)
-        # 2. new_book 변수를 만들고, Book(_title, book_id, _author)를 저장
-        # 3. self.books[book_id]에 new_book을 저장
-        # 4. self.next_book_id를 1 증가시키기
-        # 5. (True, "책 추가 완료 메시지") 를 반환 (아래 return 참고)
-        
-        return True, f"책이 등록되었습니다! 책 번호: {book_id}"
+    def create_account(self, _name: str, _initial_deposit: int = 0) -> Tuple[bool, str]:
+        """새 계좌 개설"""
+        if _initial_deposit < 0:
+            return False, "초기 입금액은 0 이상이어야 합니다."
 
-    def register_member(self, _name: str) -> Tuple[bool, str]:
-        """새 회원 등록"""
-        # === 내용 써보기! ===
-        # 1. member_id 변수를 만들고, f"M{self.next_member_id:04d}"를 저장 (예: M0001)
-        # 2. new_member 변수를 만들고, Member(_name, member_id)를 저장
-        # 3. self.members[member_id]에 new_member를 저장
-        # 4. self.next_member_id를 1 증가시키기
-        # 5. (True, "회원 등록 완료 메시지") 를 반환 (아래 return 참고)
-        
-        return True, f"회원 등록이 완료되었습니다! 회원번호: {member_id}"
+        account_number: str = str(self.next_account_number)
+        new_customer: Customer = Customer(_name, account_number, _initial_deposit)
 
-    def find_member(self, _member_id: str) -> Optional[Member]:
-        """회원번호로 회원 찾기"""
-        if _member_id in self.members:
-            return self.members[_member_id]
+        self.customers[account_number] = new_customer
+        self.next_account_number += 1
+
+        return True, f"계좌가 개설되었습니다! 계좌번호: {account_number}"
+
+    def find_customer(self, _account_number: str) -> Optional[Customer]:
+        """계좌번호로 고객 찾기"""
+        if _account_number in self.customers:
+            return self.customers[_account_number]
 
         return None
 
-    def find_book(self, _book_id: str) -> Optional[Book]:
-        """책 번호로 책 찾기"""
-        if _book_id in self.books:
-            return self.books[_book_id]
-
-        return None
-
-    def borrow_book(
-        self, _member_id: str, _book_id: str, _borrow_date: Optional[datetime] = None
+    def transfer(
+        self, _from_account: str, _to_account: str, _amount: int
     ) -> Tuple[bool, str]:
-        """책 대출하기"""
-        # === 내용 써보기! ===
-        # 1. member 변수를 만들고, self.find_member(_member_id)를 저장
-        # 2. book 변수를 만들고, self.find_book(_book_id)를 저장
-        # 3. member가 None이면, (False, "회원을 찾을 수 없습니다.") 반환
-        # 4. book이 None이면, (False, "책을 찾을 수 없습니다.") 반환
-        # 5. _borrow_date가 None이면, _borrow_date를 datetime.now()로 설정
-        # 6. success, message 변수를 만들고, member.borrow(_book_id)를 저장
-        # 7. success가 False이면, (False, message) 반환
-        # 8. success, message 변수를 만들고, book.borrow(_member_id, _borrow_date)를 저장
-        # 9. success가 False이면:
-        #    - member.return_book(_book_id) 실행 (대출 취소)
-        #    - (False, message) 반환
-        # 10. (True, "대출 완료 메시지") 반환 (아래 return 참고)
-        
-        return True, f"{member.name}님이 '{book.title}' 책을 대출했습니다."
+        """송금 - 한 계좌에서 다른 계좌로 돈 보내기"""
+        sender: Optional[Customer] = self.find_customer(_from_account)
+        receiver: Optional[Customer] = self.find_customer(_to_account)
 
-    def return_book(
-        self, _member_id: str, _book_id: str, _return_date: Optional[datetime] = None
-    ) -> Tuple[bool, str]:
-        """책 반납하기"""
-        # === 내용 써보기! ===
-        # 1. member 변수를 만들고, self.find_member(_member_id)를 저장
-        # 2. book 변수를 만들고, self.find_book(_book_id)를 저장
-        # 3. member가 None이면, (False, "회원을 찾을 수 없습니다.") 반환
-        # 4. book이 None이면, (False, "책을 찾을 수 없습니다.") 반환
-        # 5. _return_date가 None이면, _return_date를 datetime.now()로 설정
-        # 6. book.borrow_date가 None이면, (False, "대출 기록이 없습니다.") 반환
-        # 7. late_fee 변수를 만들고, member.calculate_late_fee(book.borrow_date, _return_date)를 저장
-        # 8. success, message 변수를 만들고, member.return_book(_book_id)를 저장
-        # 9. success가 False이면, (False, message) 반환
-        # 10. success, message 변수를 만들고, book.return_book()를 저장
-        # 11. success가 False이면, (False, message) 반환
-        # 12. late_fee가 0보다 크면, (True, f"반납 완료! 연체료: {late_fee:,}원") 반환
-        # 13. 그렇지 않으면, (True, "반납 완료! 연체료 없음") 반환 (아래 return 참고)
-        
-        return True, f"{member.name}님이 '{book.title}' 책을 반납했습니다."
+        if sender is None:
+            return False, "보내는 계좌를 찾을 수 없습니다."
 
-    def get_all_members(self) -> str:
-        """모든 회원 정보를 문자열로 반환"""
-        # === 내용 써보기! ===
-        # 1. self.members가 비어있으면, "등록된 회원이 없습니다." 를 반환
-        # 2. result 변수를 만들고, f"=== {self.name} 회원 목록 ===\n" 를 저장
-        # 3. for member in self.members.values(): 로 반복문 시작
-        # 4. result에 member.get_info() + "\n" 를 더하기 (result += ...)
-        # 5. result를 반환 (아래 return 참고)
-        
+        if receiver is None:
+            return False, "받는 계좌를 찾을 수 없습니다."
+
+        # 출금 시도
+        success: bool
+        message: str
+        success, message = sender.withdraw(_amount)
+
+        if not success:
+            return False, message
+
+        # 입금
+        receiver.deposit(_amount)
+
+        return True, f"{sender.name}님 → {receiver.name}님에게 {_amount:,}원 송금 완료"
+
+    def get_all_customers(self) -> str:
+        """모든 고객 정보를 문자열로 반환"""
+        if not self.customers:
+            return "등록된 고객이 없습니다."
+
+        result: str = f"=== {self.name} 고객 목록 ===\n"
+
+        for customer in self.customers.values():
+            result += customer.get_info() + "\n"
+
         return result
 
-    def get_all_books(self) -> str:
-        """모든 책 정보를 문자열로 반환"""
-        # === 내용 써보기! ===
-        # 1. self.books가 비어있으면, "등록된 책이 없습니다." 를 반환
-        # 2. result 변수를 만들고, f"=== {self.name} 도서 목록 ===\n" 를 저장
-        # 3. for book in self.books.values(): 로 반복문 시작
-        # 4. result에 book.get_info() + "\n" 를 더하기 (result += ...)
-        # 5. result를 반환 (아래 return 참고)
+
+class BankSystemUI:
+    """은행 시스템 - 은행원이 쓰는 유저 인터페이스(UI)"""
+    
+    FONT_TITLE = ("Arial", 20, "bold")
+    FONT_LABEL = ("Arial", 12)
+    FONT_ENTRY = ("Arial", 11)
+    FONT_BUTTON = ("Arial", 11, "bold")
+    FONT_RESULT = ("Arial", 10)
+
+    def __init__(self, _bank: Bank) -> None:
+        self.bank: Bank = _bank
+
+        # tkinter 메인 윈도우 생성
+        self.root = tk.Tk()
+        self.root.title("뮤타블 은행 시스템")
+        self.root.geometry("700x600")
+
+        self._init_ui()
+
+    def _init_ui(self) -> None:
+        """UI 초기화 - 버튼과 입력창 배치"""
+
+        # === 제목 ===
+        title_label = tk.Label(
+            self.root,
+            text="은행 시스템",
+            font=self.FONT_TITLE,
+            pady=10
+        )
+        title_label.pack()
+
+        # === 계좌 개설 섹션 ===
+        create_frame = tk.Frame(self.root, pady=5)
+        create_frame.pack(fill=tk.X, padx=10)
+
+        tk.Label(
+            create_frame,
+            text="고객 이름:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
         
-        return result
+        self.name_input = tk.Entry(create_frame, width=15, font=self.FONT_ENTRY)
+        self.name_input.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(
+            create_frame,
+            text="초기 입금액:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.initial_deposit_input = tk.Entry(create_frame, width=15, font=self.FONT_ENTRY)
+        self.initial_deposit_input.pack(side=tk.LEFT, padx=5)
+
+        create_btn = tk.Button(
+            create_frame,
+            text="계좌 개설",
+            command=self._create_account,
+            bg="#4CAF50",
+            fg="white",
+            width=10,
+            font=self.FONT_BUTTON
+        )
+        create_btn.pack(side=tk.LEFT, padx=5)
+
+        # === 입금/출금 섹션 ===
+        transaction_frame = tk.Frame(self.root, pady=5)
+        transaction_frame.pack(fill=tk.X, padx=10)
+
+        tk.Label(
+            transaction_frame,
+            text="계좌번호:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.account_input = tk.Entry(transaction_frame, width=15, font=self.FONT_ENTRY)
+        self.account_input.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(
+            transaction_frame,
+            text="금액:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.amount_input = tk.Entry(transaction_frame, width=15, font=self.FONT_ENTRY)
+        self.amount_input.pack(side=tk.LEFT, padx=5)
+
+        deposit_btn = tk.Button(
+            transaction_frame,
+            text="입금",
+            command=self._deposit,
+            bg="#2196F3",
+            fg="white",
+            width=8,
+            font=self.FONT_BUTTON
+        )
+        deposit_btn.pack(side=tk.LEFT, padx=5)
+
+        withdraw_btn = tk.Button(
+            transaction_frame,
+            text="출금",
+            command=self._withdraw,
+            bg="#FF9800",
+            fg="white",
+            width=8,
+            font=self.FONT_BUTTON
+        )
+        withdraw_btn.pack(side=tk.LEFT, padx=5)
+
+        # === 송금 섹션 ===
+        transfer_frame = tk.Frame(self.root, pady=5)
+        transfer_frame.pack(fill=tk.X, padx=10)
+
+        tk.Label(
+            transfer_frame,
+            text="보내는 계좌:",
+            width=12,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.from_account_input = tk.Entry(transfer_frame, width=10, font=self.FONT_ENTRY)
+        self.from_account_input.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(
+            transfer_frame,
+            text="받는 계좌:",
+            width=10,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.to_account_input = tk.Entry(transfer_frame, width=10, font=self.FONT_ENTRY)
+        self.to_account_input.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(
+            transfer_frame,
+            text="금액:",
+            width=6,
+            font=self.FONT_LABEL
+        ).pack(side=tk.LEFT, padx=5)
+        
+        self.transfer_amount_input = tk.Entry(transfer_frame, width=10, font=self.FONT_ENTRY)
+        self.transfer_amount_input.pack(side=tk.LEFT, padx=5)
+
+        transfer_btn = tk.Button(
+            transfer_frame,
+            text="송금",
+            command=self._transfer,
+            bg="#9C27B0",
+            fg="white",
+            width=8,
+            font=self.FONT_BUTTON
+        )
+        transfer_btn.pack(side=tk.LEFT, padx=5)
+
+        # === 조회 버튼 ===
+        query_frame = tk.Frame(self.root, pady=5)
+        query_frame.pack(fill=tk.X, padx=10)
+
+        check_balance_btn = tk.Button(
+            query_frame,
+            text="잔액 조회",
+            command=self._check_balance,
+            bg="#607D8B",
+            fg="white",
+            width=15,
+            font=self.FONT_BUTTON
+        )
+        check_balance_btn.pack(side=tk.LEFT, padx=5)
+
+        show_all_btn = tk.Button(
+            query_frame,
+            text="전체 고객 조회",
+            command=self._show_all_customers,
+            bg="#607D8B",
+            fg="white",
+            width=15,
+            font=self.FONT_BUTTON
+        )
+        show_all_btn.pack(side=tk.LEFT, padx=5)
+
+        # === 결과 출력 영역 ===
+        result_frame = tk.Frame(self.root, pady=5)
+        result_frame.pack(fill=tk.BOTH, expand=True, padx=10)
+
+        tk.Label(
+            result_frame,
+            text="결과:",
+            font=self.FONT_LABEL
+        ).pack(anchor=tk.W)
+        
+        self.result_display = scrolledtext.ScrolledText(
+            result_frame,
+            width=80,
+            height=15,
+            bg="#2b2b2b",
+            fg="white",
+            font=self.FONT_RESULT,
+        )
+        self.result_display.pack(fill=tk.BOTH, expand=True)
+
+    def _show_message(self, _message: str) -> None:
+        """결과 출력 영역에 메시지 표시"""
+        current_text = self.result_display.get("1.0", tk.END)
+        self.result_display.delete("1.0", tk.END)
+        self.result_display.insert("1.0", f"{_message}\n{'='*50}\n{current_text}")
+
+    def _create_account(self) -> None:
+        """계좌 개설 버튼 클릭 시"""
+        name = self.name_input.get().strip()
+        initial_deposit_text = self.initial_deposit_input.get().strip()
+
+        if not name:
+            messagebox.showwarning("오류", "고객 이름을 입력하세요.")
+            return
+
+        try:
+            initial_deposit = int(initial_deposit_text) if initial_deposit_text else 0
+        except ValueError:
+            messagebox.showwarning("오류", "초기 입금액은 숫자여야 합니다.")
+            return
+
+        success, message = self.bank.create_account(name, initial_deposit)
+
+        if success:
+            self._show_message(f"[OK] {message}")
+            self.name_input.delete(0, tk.END)
+            self.initial_deposit_input.delete(0, tk.END)
+        else:
+            messagebox.showwarning("오류", message)
+
+    def _deposit(self) -> None:
+        """입금 버튼 클릭 시"""
+        account_number = self.account_input.get().strip()
+        amount_text = self.amount_input.get().strip()
+
+        if not account_number or not amount_text:
+            messagebox.showwarning("오류", "계좌번호와 금액을 입력하세요.")
+            return
+
+        try:
+            amount = int(amount_text)
+        except ValueError:
+            messagebox.showwarning("오류", "금액은 숫자여야 합니다.")
+            return
+
+        customer = self.bank.find_customer(account_number)
+        if customer is None:
+            messagebox.showwarning("오류", "계좌를 찾을 수 없습니다.")
+            return
+
+        success, message = customer.deposit(amount)
+
+        if success:
+            self._show_message(f"[OK] {message}")
+            self.amount_input.delete(0, tk.END)
+        else:
+            messagebox.showwarning("오류", message)
+
+    def _withdraw(self) -> None:
+        """출금 버튼 클릭 시"""
+        account_number = self.account_input.get().strip()
+        amount_text = self.amount_input.get().strip()
+
+        if not account_number or not amount_text:
+            messagebox.showwarning("오류", "계좌번호와 금액을 입력하세요.")
+            return
+
+        try:
+            amount = int(amount_text)
+        except ValueError:
+            messagebox.showwarning("오류", "금액은 숫자여야 합니다.")
+            return
+
+        customer = self.bank.find_customer(account_number)
+        if customer is None:
+            messagebox.showwarning("오류", "계좌를 찾을 수 없습니다.")
+            return
+
+        success, message = customer.withdraw(amount)
+
+        if success:
+            self._show_message(f"[OK] {message}")
+            self.amount_input.delete(0, tk.END)
+        else:
+            messagebox.showwarning("오류", message)
+
+    def _transfer(self) -> None:
+        """송금 버튼 클릭 시"""
+        from_account = self.from_account_input.get().strip()
+        to_account = self.to_account_input.get().strip()
+        amount_text = self.transfer_amount_input.get().strip()
+
+        if not from_account or not to_account or not amount_text:
+            messagebox.showwarning("오류", "모든 필드를 입력하세요.")
+            return
+
+        try:
+            amount = int(amount_text)
+        except ValueError:
+            messagebox.showwarning("오류", "금액은 숫자여야 합니다.")
+            return
+
+        success, message = self.bank.transfer(from_account, to_account, amount)
+
+        if success:
+            self._show_message(f"[OK] {message}")
+            self.transfer_amount_input.delete(0, tk.END)
+        else:
+            messagebox.showwarning("오류", message)
+
+    def _check_balance(self) -> None:
+        """잔액 조회 버튼 클릭 시"""
+        account_number = self.account_input.get().strip()
+
+        if not account_number:
+            messagebox.showwarning("오류", "계좌번호를 입력하세요.")
+            return
+
+        customer = self.bank.find_customer(account_number)
+        if customer is None:
+            messagebox.showwarning("오류", "계좌를 찾을 수 없습니다.")
+            return
+
+        self._show_message(f"[잔액] {customer.get_info()}")
+
+    def _show_all_customers(self) -> None:
+        """전체 고객 조회 버튼 클릭 시"""
+        all_customers = self.bank.get_all_customers()
+        self._show_message(all_customers)
+
+    def run(self) -> None:
+        """프로그램 실행"""
+        self.root.mainloop()
 
 
 if __name__ == "__main__":  # 이 파일 내에서만 실행됨!
-    library = Library("부산 시립 도서관")  # 도서관 개설!
-
-    # === 아래 내용을 채워서 테스트 해보기! ===
-    # 1. library.add_book("파이썬 프로그래밍", "홍길동") 실행하고 결과를 출력
-    # 2. library.add_book("자료구조와 알고리즘", "김철수") 실행하고 결과를 출력
-    # 3. library.add_book("Clean Code", "로버트 마틴") 실행하고 결과를 출력
-    # 4. library.get_all_books() 실행하고 결과를 출력
-    # 5. library.register_member("이영희") 실행하고 결과를 출력
-    # 6. library.register_member("박민수") 실행하고 결과를 출력
-    # 7. library.get_all_members() 실행하고 결과를 출력
-    # 8. library.borrow_book("M0001", "B0001") 실행 (이영희가 파이썬 프로그래밍 대출)
-    # 9. library.borrow_book("M0001", "B0002") 실행 (이영희가 자료구조 대출)
-    # 10. library.get_all_books() 실행하고 결과를 출력 (대출 상태 확인)
-    # 11. library.find_member("M0001")을 사용해서 이영희 회원 찾기
-    # 12. 찾은 회원의 정보 출력 (member.get_info())
-    # 13. library.return_book("M0001", "B0001") 실행 (이영희가 파이썬 프로그래밍 반납)
-    # 14. library.get_all_members() 실행하고 최종 결과 출력
+    bank = Bank("뮤타블 은행")  # Bank 객체 생성
+    ui = BankSystemUI(bank)  # UI 객체 생성
+    ui.run()  # 프로그램 실행
